@@ -1,29 +1,27 @@
 <template>
     <v-container class="bg-surface mb-6" align="center">
 
-        <v-sheet class="pa-2 ma-2" color="surface" rounded="xl" :width="1050" align="center">
-        <v-col cols="10">
-        <v-row :max-width="1000">
-            <v-col align="start" no-gutters>
-                
-                <v-card class="mx-auto" :width="600" :height="300" rounded="xl" align="center" justify="center" title="Temperature">
-            
-                    <v-row justify="start">
-                        <v-col align="center">
-                            <span class="text-h3"> {{ temperature }} </span>
-                        </v-col>
-                        <v-col>
-                            <VImg height="80" class="mb-5" :src="`https://openweathermap.org/img/wn/${isUmbrella}d@2x.png`" />
-                        </v-col>
-                    </v-row>
-                    <p class="font-italic">{{ forecastNotes }}</p><br>
-                    <v-btn class="button"  @click="convertTo();" color="surface-variant"  variant="outlined" > Convert to {{ units }}
-                         </v-btn>
-                </v-card>
-            </v-col>
-           <v-row>
-            <v-col align="end">
-                    <v-sheet   :width="210" subtitle="Weather Conditions">
+        <v-sheet class="pb-2 mb-2" color="surface" rounded="xl"  align="center">
+                <v-row :max-width="1000">
+                    <v-col align="start" cols="8" no-gutters>
+                        
+                        <v-card class="mx-auto" :width="600" :height="300" rounded="xl" align="center" justify="center" title="Temperature">
+                    
+                            <v-row justify="start">
+                                <v-col align="center">
+                                    <span class="text-h2"> {{ temperature }} </span>
+                                </v-col>
+                                <v-col>
+                                    <VImg height="80" class="mb-10" :src="`https://openweathermap.org/img/wn/${isUmbrella}d@2x.png`" />
+                                </v-col>
+                            </v-row>
+                            <p class="ma-5">{{ forecastNotes }}</p><br>
+                        </v-card>
+                        <v-btn class="mt-5" align="center"  @click="convertTo();" color="surface-variant"  variant="outlined" > Convert to {{ units }}
+                            </v-btn>
+                    </v-col>
+            <v-col  cols="4">
+                    <v-sheet class="ml-10"  :width="210" subtitle="Weather Conditions">
                         <v-card-item> 
                             <v-list-item
                                 density="compact"
@@ -49,12 +47,11 @@
                             </v-list-item><br>
                         </v-card-item>
                     </v-sheet>
-            
-                </v-col>
-                <v-row>
-                  
-                </v-row>
-        </v-row>
+                    
+            </v-col>
+                
+            </v-row>
+        <v-row>
         <v-col cols="12">
             <figure class="highcharts-figure">
                 <div id="container"></div>
@@ -64,21 +61,26 @@
         </v-col>
         </v-row>
         <v-row  justify="start">
-            <v-col cols="9">
+            <v-col cols="12">
                 <figure class="highcharts-figure">
                     <div id="container1"></div>
                 </figure>
                 
             </v-col>
-            <v-col cols="3">
-                <v-card rounded="xl" subtitle="Soil Moisture Percentage" :width="280" :height="380" >
-                <v-progress-circular  :rotate="360" :model-value="moist" :size="250" :width="6" color="teal">
-                    <template v-slot:default> {{ moist }} % </template>
-                </v-progress-circular>
-                </v-card>
+        </v-row>
+        <v-row>
+            <v-col cols="6">
+                <figure class="highcharts-figure">
+                    <div id="container6"></div>
+                </figure>
+            </v-col>
+            <v-col cols="6">
+                <figure class="highcharts-figure">
+                    <div id="container5"></div>
+                </figure>
             </v-col>
         </v-row>
-        </v-col>
+       
     </v-sheet>
     </v-container> 
 </template>
@@ -145,15 +147,17 @@ const airpressure = computed(()=>{
 const units = ref("Fahrenheit"); // Temperature units
 const tempChart = ref(null); // Chart object
 const HiChart = ref(null); // Chart object
+const altChart = ref(null); // Chart object
+const soilChart = ref(null); // Chart object
 let isCelsius = true; // Temperature units
-let moist = ref(0); // soil moisture
+let moist = ref(10); // soil moisture
 
 
 const CreateCharts = async () => {
 // TEMPERATURE CHART
     tempChart.value = Highcharts.chart('container', {
     chart: { zoomType: 'x' },
-    title: { text: 'Temperature Analysis and Heat Index (Live)', align: 'left' },
+    title: { text: 'Temperature and Heat Index Analysis (Live)', align: 'left' },
     yAxis: {
     title: { text: '°C', style:{color:'#000000'}},
     labels: { format:'{value} °C' }
@@ -201,7 +205,119 @@ const CreateCharts = async () => {
     color: Highcharts.getOptions().colors[14]
     } ],
     });
+
+    altChart.value = Highcharts.chart('container5', {
     
+        chart: {
+            type: 'gauge',
+            alignTicks: false,
+            plotBackgroundColor: null,
+            plotBackgroundImage: null,
+            plotBorderWidth: 0,
+            plotShadow: false
+        },
+
+        title: {
+            text: 'Barometer Pressure with Altitude (Live)',
+        },
+
+        pane: {
+            startAngle: -150,
+            endAngle: 150
+        },
+
+        yAxis: [{
+            min: 986,
+            max: 1014,
+            lineColor: '#339',
+            tickColor: '#339',
+            minorTickColor: '#339',
+            offset: -25,
+            lineWidth: 2,
+            labels: {
+                distance: -20,
+                rotation: 'auto'
+            },
+            tickLength: 5,
+            minorTickLength: 5,
+            endOnTick: false
+        }, {
+            min: 235,
+            max: 350,
+            tickPosition: 'outside',
+            lineColor: '#933',
+            lineWidth: 2,
+            minorTickPosition: 'outside',
+            tickColor: '#933',
+            minorTickColor: '#933',
+            tickLength: 5,
+            minorTickLength: 5,
+            reversed: true,
+            labels: {
+                distance: 12,
+                rotation: 'auto'
+            },
+            offset: -20,
+            endOnTick: false
+        }],
+
+        series: [{
+            name: 'Pressure',
+            data: [1000],
+            dataLabels: {
+                format: '<span style="color:#339">{y} hPa</span><br/>' +
+                    '<span style="color:#933">'+ moist.value + ' m</span>',
+                backgroundColor: {
+                    linearGradient: {
+                        x1: 0,
+                        y1: 0,
+                        x2: 0,
+                        y2: 1
+                    },
+                    stops: [
+                        [0, '#DDD'],
+                        [1, '#FFF']
+                    ]
+                }
+            },
+            tooltip: {
+                valueSuffix: 'hPa'
+            }
+        }]
+
+        });
+
+        soilChart.value = Highcharts.chart('container6', {
+        title: { text: 'Soil Moisture (Live)', align: 'left' },// the value axis
+        yAxis: {
+        min: 0,
+        max: 100,
+        tickPixelInterval: 72,
+        tickPosition: 'inside',
+        tickColor: Highcharts.defaultOptions.chart.backgroundColor || '#FFFFFF',
+        tickLength: 20,
+        tickWidth: 2,
+        minorTickInterval: null,
+        labels: { distance: 20, style: { fontSize: '14px' } },
+        lineWidth: 0,
+        plotBands: [{ from: 0, to: 20, color: '#DF5353', thickness: 20 }, { from: 20, to: 60, color: '#DDDF0D', thickness: 20
+        }, { from: 60, to: 100, color: '#55BF3B', thickness: 20 }]
+        },
+        tooltip: { shared:true, },
+        pane: { startAngle: -90, endAngle: 89.9, background: null, center: ['50%', '75%'], size: '110%' },
+        series: [{
+        type:'gauge',
+        name: 'Soil Moisture',
+        data:[0],
+        tooltip: { valueSuffix: ' %' },
+        dataLabels: { format: '{y} %', borderWidth: 0, color: ( Highcharts.defaultOptions.title &&
+        Highcharts.defaultOptions.title.style && Highcharts.defaultOptions.title.style.color ) || '#333333', style: { fontSize: '16px' }
+        },
+        dial: { radius: '80%', backgroundColor: 'gray', baseWidth: 12, baseLength: '0%', rearLength: '0%' },
+        pivot: { backgroundColor: 'gray', radius: 6 }
+        }]
+        });
+                    
 
 };
 
@@ -232,7 +348,10 @@ watch(payload,(data)=> {
         else{ shift.value = true; }
 
         
-     moist.value = parseFloat(data.soilmoisture);
+    soilChart.value.series[0].points[0].update(data.moisture);
+    altChart.value.series[0].points[0].update(data.pressure);
+    moist.value = data.altitude;
+
 
    if(isCelsius){
 
@@ -250,15 +369,15 @@ watch(payload,(data)=> {
         HiChart.value.series[0].addPoint({y:parseFloat(data.humidity.toFixed(2)) ,x: (data.timestamp-18000)* 1000 },    
         true, shift.value);
 }
-if ( data.temperature > 20 && data.temperature < 25 && data.humidity > 50 && data.humidity < 70){
+if ( data.humidity>=65 && data.humidity<=70){
     console.log("Temperature and Humidity are within the normal range");
     forecastNotes.value = "Clouds a cover di sky today, bringing a cool breeze and a break from di sun's glare.";
     isUmbrella.value = "02";}
-if ( data.temperature > 25  || data.humidity > 70 && data.humidity < 90){
+    if ( data.humidity>0 && data.humidity<65){
     console.log("Temperature and Humidity are above the normal range");
     forecastNotes.value = "Today's forecast seh di sun a go shine bright, inviting everybody fi soak up di warmth and vibes.";
     isUmbrella.value = "01";}
-if ( data.temperature > 15 && data.temperature < 20  || data.humidity > 70 && data.humidity < 90){
+    if ( data.humidity>=70 && data.humidity<=100){
     console.log("Temperature and Humidity are below the normal range");
     forecastNotes.value = "Rain a go fall today, so mek sure yuh grab yuh umbrella and stay dry as yuh move about.";
     isUmbrella.value = "04";}
@@ -299,15 +418,30 @@ Figure {
 border: 2px solid black;
 }
 
-.font-italic {
+.ma-5 {
     font-style: italic;
 
 }
 
+button
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    border: 2px solid #f5f5f5;
+    color: black;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 12px; 
+}
+
 .mx-auto {
     display: block;
-    background: linear-gradient(45deg, rgb(255, 124, 30), rgb(242, 234, 228));
+    color: rgb(255, 255, 255);
+    background: linear-gradient(45deg, rgb(30, 161, 255), rgb(242, 234, 228));
     padding:"25px 50px 75px 100px;"
+    
 }
 
 

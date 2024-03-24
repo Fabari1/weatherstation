@@ -17,6 +17,7 @@ export const useMqttStore =  defineStore('mqtt', ()=>{
     // STATES 
     const mqtt              = ref(null);
     const host              = ref("dbs.msjrealtms.com");  // Host Name or IP address
+    // const host              = ref("www.yanacreations.com");  // Host Name or IP address
     const port              = ref(9002);  // Port number
     const payload           = ref({"id": "620154701","type": "weather", "temperature": 0, "humidity": 0, "heatindex": 0,"pressure": 0, "soilmoisture":0, "altitude":0}); // Set initial values for payload
     const payloadTopic      = ref("");

@@ -43,7 +43,7 @@ const lightMode = {
     shadow : "#000000",
     surfaceTint : "#335CA8",
     outlineVariant : "#C5C6D0",
-    scrim : "#000000"
+    scrim : "#FFFFFF"
   },
 }
 

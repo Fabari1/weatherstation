@@ -39,7 +39,7 @@
 #define ARDUINOJSON_USE_DOUBLE      1 
 
 // DEFINE THE CONTROL PINS FOR THE DHT22 
-#define DHTPIN 27 //datapin of sensor
+#define DHTPIN 4 //datapin of sensor
 #define DHTTYPE DHT22 // define the type of sensor
 
 #define BTN1      32
@@ -107,11 +107,12 @@ float tempF = 0;
 static const char* pubtopic      = "620154701";                    // Add your ID number here
 static const char* subtopic[]    = {"620154701_sub","/elet2415"};  // Array of Topics(Strings) to subscribe to
 static const char* mqtt_server   = "dbs.msjrealtms.com";         // Broker IP address or Domain name as a String 
+// static const char* mqtt_server   = "www.yanacreations.com";         // Broker IP address or Domain name as a String 
 static uint16_t mqtt_port        = 1883;
 
 // WIFI CREDENTIALS
-const char* ssid       = "MonaConnect" ; // Add your Wi-Fi ssid
-const char* password   = ""; // Add your Wi-Fi password 
+const char* ssid       = "ARRIS-34A2" ; // Add your Wi-Fi ssid
+const char* password   = "BPM7EW600194"; // Add your Wi-Fi password 
 
 
 
@@ -151,7 +152,7 @@ void vUpdate( void * pvParameters );
 #include "foreCast.h"
 #endif
 
-#define analogPin A3
+#define analogPin A4
 
 
 /* Initialize class objects*/
@@ -330,19 +331,19 @@ void vUpdate( void * pvParameters )  {
         tft.setTextColor (GREEN, RED);
         tft.print (" %   ");
 
-      if((h)>0 &&  (h)<55 )
+      if((h)>0 &&  (h)<65 )
         {
         tft.drawBitmap(245,150, sun,50,50,YELLOW,RED);
       } else 
 
-      if((h)>=55 &&  (h)<80 )
+      if((h)>=65 &&  (h)<70 )
         {
         tft.drawBitmap(245,150, cloud,50,50,WHITE,RED);
         
       } else
 
 
-      if((h)>=80 &&  (h)<100 )
+      if((h)>=70 &&  (h)<100 )
         {
         tft.drawBitmap(245,150, rain,50,50,BLUE,RED);
         
