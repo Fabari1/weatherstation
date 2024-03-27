@@ -111,8 +111,8 @@ static const char* mqtt_server   = "www.yanacreations.com";         // Broker IP
 static uint16_t mqtt_port        = 1883;
 
 // WIFI CREDENTIALS
-const char* ssid       = "ARRIS-34A2" ; // Add your Wi-Fi ssid
-const char* password   = "BPM7EW600194"; // Add your Wi-Fi password 
+const char* ssid       = "MonaConnect" ; // Add your Wi-Fi ssid
+const char* password   = ""; // Add your Wi-Fi password 
 
 
 

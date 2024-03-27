@@ -33,11 +33,13 @@
                             variant="solo-filled"
                             ></v-autocomplete>
                             <v-btn
-                                class="ma-4"
+                                class="ma-2"
+                                variant="contained"
                                 @click="convertTo(); hasSaved = true"
+                                prepend-icon="mdi-swap-horizontal"
                                 
                                 >
-                                Done
+                                Convert
                             </v-btn>
                        
                         </v-row>
@@ -443,8 +445,7 @@ watch(payload,(data)=> {
         true, shift.value);
         HiChart.value.series[0].addPoint({y:parseFloat(data.humidity.toFixed(2)) ,x: (data.timestamp-18000)* 1000 },
         true, shift.value);
-        heightChart.value.series[0].addPoint({y:parseFloat(data.altitude.toFixed(2)) ,x: (data.timestamp-18000)* 1000 },
-        true, shift.value);
+     
     }else{
         tempChart.value.series[0].addPoint({y:convertToFahrenheit(parseFloat(data.temperature.toFixed(2))) ,x: (data.timestamp-18000) * 1000 },
         true, shift.value);
@@ -452,8 +453,7 @@ watch(payload,(data)=> {
         true, shift.value);
         HiChart.value.series[0].addPoint({y:parseFloat(data.humidity.toFixed(2)) ,x: (data.timestamp-18000)* 1000 },    
         true, shift.value);
-        heightChart.value.series[0].addPoint({y:parseFloat(data.altitude.toFixed(2)) ,x: (data.timestamp-18000)* 1000 },
-        true, shift.value);
+       
 }
 if(isAltitude){
     heightChart.value.series[0].addPoint({y:parseFloat(data.altitude.toFixed(2)) ,x: (data.timestamp-18000)* 1000 },
@@ -529,6 +529,9 @@ function convertTo() {
     selected.value = [];
 }
 
+setInterval(() => {
+window.location.reload();
+}, 60000);
 
 
 </script>

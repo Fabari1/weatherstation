@@ -1,5 +1,5 @@
 <template>
-    <v-container class="container" fluid>
+    <v-container class="bg-surface container" fluid>
       <v-row class="row">
         <v-col cols="3" align="center">
           <v-card
@@ -39,6 +39,7 @@
                 {{ temperature.avg }}
               </span>
             </v-card-item>
+            <v-chip class="ma-2"> {{ isCelsius ? 'Celsius' : 'Fahrenheit' }} </v-chip> 
           </v-card>
         </v-col>
         <v-col cols="3" align="center">
@@ -79,6 +80,7 @@
                 {{ humidity.avg }}
               </span>
             </v-card-item>
+            <v-chip class="ma-2"> Percent </v-chip>
           </v-card>
         </v-col>
         <v-col cols="3" align="center">
@@ -119,6 +121,7 @@
                 {{ pressure.avg }}
               </span>
             </v-card-item>
+            <v-chip class="ma-2"> {{ isPressure ? 'Hectopascal' : 'Millimetre of Mercury' }} </v-chip>
           </v-card>
         </v-col>
         <v-col cols="3" align="center">
@@ -159,11 +162,12 @@
                 {{ soilmoisture.avg }}
               </span>
             </v-card-item>
+            <v-chip class="ma-2"> Percent </v-chip>
           </v-card>
         </v-col>
       </v-row>
       <v-row class="ma-5">
-        <v-col align="start" cols="8">
+        <v-col align="center" cols="12">
           <p>Enter date range for Analysis</p>
           <v-divider></v-divider>
           <br />
@@ -188,7 +192,7 @@
               flat
             ></v-text-field>
           </v-sheet>
-     
+            <br />
             <v-btn
               text="Analyze"
               class="mr-5"
@@ -202,34 +206,33 @@
               variant="tonal"
             ></v-btn>
           </v-col>
-          <v-col align="center" cols="4">
-         
-          <br />
-          <v-row>
-          <v-sheet class="w-50">
-            <v-form >
+        </v-row>
+         <v-row>
+         <v-sheet class="w-25 ma-2">
+            <v-form>
                 <v-autocomplete
+             
                 clearable
                 chips
-                label="Convert Data"
+                label="Convert Units"
                 :items="[isCelsius ? 'Fahrenheit' : 'Celsius', isPressure ? 'Millimetre of Mercury' : 'Hectopascal']"
                 multiple
                 v-model="selected"
                 variant="outlined"
                 ></v-autocomplete>
+              
             </v-form>
           </v-sheet>
-          
-          <v-btn
-          class="ma-5"
-          color="primary"
-          variant="tonal"
-          @click="convertData();testr();">
-          Done
-        </v-btn>
-      </v-row>
-          </v-col>
-      </v-row>
+          <v-btn   
+            align="center" 
+            class="ma-4"    
+            color="primary"
+            variant="tonal"
+                @click="convertData()">
+                Convert
+            </v-btn>
+
+          </v-row>
       <v-row class="row">
         <v-col cols="12">
           <figure class="highcharts-figure">
@@ -569,7 +572,7 @@
      
    
       // Iterate through data variable and transform object to format recognized by highcharts
-    if(selected.value.includes("Celsius") || !selected.value==[]){
+    if(selected.value.includes("Celsius") || selected.value.length==0){
       data.forEach((row) => {
         temperature.push({
           x: row.timestamp * 1000,
@@ -584,7 +587,7 @@
           y: parseFloat(row.humidity.toFixed(2)),
         });
       });
-    }else if(selected.value.includes("Fahrenheit")){
+    }else if(selected.value.includes("Fahrenheit") ||  selected.value.length>=0){
       data.forEach((row) => {
         temperature.push({
           x: row.timestamp * 1000,
@@ -712,12 +715,55 @@
       // Convert output from Textfield components to 10 digit timestamps
       // Fetch data from backend
       const data = await AppStore.getAllInRange(startDate, endDate);
+      console.log(data);
       // Create arrays for each plot
       let scatterPoints1 = [];
       let scatterPoints2 = [];
       let scatterPoints3 = [];
       // Iterate through data variable and transform object to format recognized by highcharts
-      if (selected.value.includes("Fahrenheit")){
+    if(selected.value.includes("Celsius") || selected.value.includes("Hectopascal") ||  selected.value.length==0){
+     data.forEach((row) => {
+        scatterPoints1.push({
+          x: parseFloat(row.temperature.toFixed(2)),
+          y: parseFloat(row.heatindex.toFixed(2)),
+        });
+        scatterPoints2.push({
+          x: parseFloat(row.humidity.toFixed(2)),
+          y: parseFloat(row.heatindex.toFixed(2)),
+        });
+        scatterPoints3.push({
+          x: parseFloat(row.pressure.toFixed(2)),
+          y: parseFloat(row.altitude.toFixed(2)),
+        });
+      });}
+      if(selected.value.includes("Fahrenheit") ||  selected.value.length>=0){
+        data.forEach((row) => {
+          scatterPoints1.push({
+            x: parseFloat(celsiusToFahrenheit(row.temperature).toFixed(2)),
+            y: parseFloat(celsiusToFahrenheit(row.heatindex).toFixed(2)),
+          });
+          scatterPoints2.push({
+            x: parseFloat(row.humidity.toFixed(2)),
+            y: parseFloat(celsiusToFahrenheit(row.heatindex).toFixed(2)),
+          });
+          scatterPoints3.push({
+            x: parseFloat(row.pressure.toFixed(2)),
+            y: parseFloat(row.altitude.toFixed(2)),
+          });
+        });
+      }
+
+      if (selected.value.includes("Millimetre of Mercury") ||  selected.value.length>=0){
+        data.forEach((row) => {
+        scatterPoints3.push({
+          x: parseFloat(hPascalToMmHg(row.pressure).toFixed(2)),
+          y: parseFloat(row.altitude.toFixed(2)),
+        });
+      });  }
+
+      /*
+      if(selected.value.includes("Celsius") || selected.value==[]){
+       if (selected.value.includes("Fahrenheit")){
       data.forEach((row) => {
         scatterPoints1.push({
           x: parseFloat(celsiusToFahrenheit(row.temperature).toFixed(2)),
@@ -731,7 +777,7 @@
           y: parseFloat(celsiusToFahrenheit(row.heatindex).toFixed(2)),
         });
       });}
-      else if(selected.value.includes("Celsius") || selected.value==[]){
+      else 
         data.forEach((row) => {
         scatterPoints1.push({
           x: parseFloat(row.temperature.toFixed(2)),
@@ -747,14 +793,15 @@
         });
       });
       }
-      if (selected.value.includes("Millimetre of Mercury")){
-        data.forEach((row) => {
-        scatterPoints3.push({
-          x: parseFloat(hPascalToMmHg(row.pressure).toFixed(2)),
-          y: parseFloat(row.altitude.toFixed(2)),
-        });
-      });  
-    }
+    //   if (selected.value.includes("Millimetre of Mercury")){
+    //     data.forEach((row) => {
+    //     scatterPoints3.push({
+    //       x: parseFloat(hPascalToMmHg(row.pressure).toFixed(2)),
+    //       y: parseFloat(row.altitude.toFixed(2)),
+    //     });
+    //   });  
+    // }
+      */
       // Add data to Temperature and Heat Index chart
       tempHiScat.value.series[0].setData(scatterPoints1);
       humScat.value.series[0].setData(scatterPoints2);
@@ -786,7 +833,6 @@
     tempHiLine.value.yAxis[0].update({labels: { format:'{value} °F' }});
     tempHiScat.value.yAxis[0].update({title: { text: '°F' , style:{color:'#000000'}}});
     tempHiScat.value.yAxis[0].update({labels: { format:'{value} °F' }});
-    tempHiScat.value.xAxis[0].update({labels: { format: '{value} °F' }});
     humScat.value.yAxis[0].update({labels: { format: '{value} °F' }});
   };
 
@@ -797,7 +843,6 @@
     tempHiLine.value.yAxis[0].update({labels: { format:'{value} °C' }});
     tempHiScat.value.yAxis[0].update({title: { text: '°C' , style:{color:'#000000'}}});
     tempHiScat.value.yAxis[0].update({labels: { format:'{value} °C' }});
-    tempHiScat.value.xAxis[0].update({labels: { format: '{value} °C' }});
     humScat.value.yAxis[0].update({labels: { format: '{value} °C' }});
   }
 
@@ -822,17 +867,17 @@
       selected.value = [];
     }, 10000);
 
-    
+  };
 
   
-  };
   </script>
   
   <style scoped>
   /** CSS STYLE HERE */
   
   .container {
-    background-color: #f5f5f5;
+    /* background-color: #f5f5f5; */
+   
     width: 1200px;
   }
   
@@ -854,6 +899,8 @@
   
   .sheet {
     display: flex;
+    align-items: center;
+    justify-content: center;
     height: 100px;
     width: 100%;
   }
