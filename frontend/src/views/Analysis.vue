@@ -162,8 +162,8 @@
           </v-card>
         </v-col>
       </v-row>
-      <v-row class="ma-5" align="center">
-        <v-col align="center">
+      <v-row class="ma-5">
+        <v-col align="start" cols="8">
           <p>Enter date range for Analysis</p>
           <v-divider></v-divider>
           <br />
@@ -184,32 +184,51 @@
               type="Date"
               dense
               solo-inverted
-              class="mr-5"
               :style="{ maxWidth: '210px' }"
               flat
             ></v-text-field>
           </v-sheet>
-            <br />
+     
             <v-btn
               text="Analyze"
               class="mr-5"
               @click="
-                updateLineCharts(false);
-                updateCards(false);
+                updateLineCharts();
+                updateCards(true);
                 updateHistogramCharts();
-                updateScatter(false);
+                updateScatter();
               "
               color="primary"
               variant="tonal"
             ></v-btn>
-            <v-btn
-              text="Convert"
-              class="mr-5"
-              @click="convertData()"
-              color="primary"
-              variant="tonal"
-            ></v-btn>
-        </v-col>
+          </v-col>
+          <v-col align="center" cols="4">
+         
+          <br />
+          <v-row>
+          <v-sheet class="w-50">
+            <v-form >
+                <v-autocomplete
+                clearable
+                chips
+                label="Convert Data"
+                :items="[isCelsius ? 'Fahrenheit' : 'Celsius', isPressure ? 'Millimetre of Mercury' : 'Hectopascal']"
+                multiple
+                v-model="selected"
+                variant="outlined"
+                ></v-autocomplete>
+            </v-form>
+          </v-sheet>
+          
+          <v-btn
+          class="ma-5"
+          color="primary"
+          variant="tonal"
+          @click="convertData();testr();">
+          Done
+        </v-btn>
+      </v-row>
+          </v-col>
       </v-row>
       <v-row class="row">
         <v-col cols="12">
@@ -290,6 +309,10 @@
   const tempHiScat = ref(null); // Chart object
   const ampPresScat = ref(null); // Chart object
   const humScat = ref(null); // Chart object
+  const isCelsius = ref(true);
+  const isPressure = ref(true);
+  const selected = ref([]);
+  const rule = ref(true);
   // FUNCTIONS
   
   const CreateCharts = async () => {
@@ -532,7 +555,7 @@
     Mqtt.unsubcribeAll();
   });
   
-  const updateLineCharts = async (rule) => {
+  const updateLineCharts = async () => {
     if (!!start.value && !!end.value) {
       // Convert output from Textfield components to 10 digit timestamps
       let startDate = new Date(start.value).getTime() / 1000;
@@ -546,22 +569,7 @@
      
    
       // Iterate through data variable and transform object to format recognized by highcharts
-     if (rule){
-      data.forEach((row) => {
-        temperature.push({
-          x: row.timestamp * 1000,
-          y: parseFloat(celsiusToFahrenheit(row.temperature).toFixed(2)),
-        });
-        heatindex.push({
-          x: row.timestamp * 1000,
-          y: parseFloat(celsiusToFahrenheit(row.heatindex).toFixed(2)),
-        });
-        humidity.push({
-          x: row.timestamp * 1000,
-          y: parseFloat(row.humidity.toFixed(2)),
-        });
-      });
-    } else {
+    if(selected.value.includes("Celsius") || !selected.value==[]){
       data.forEach((row) => {
         temperature.push({
           x: row.timestamp * 1000,
@@ -576,17 +584,33 @@
           y: parseFloat(row.humidity.toFixed(2)),
         });
       });
+    }else if(selected.value.includes("Fahrenheit")){
+      data.forEach((row) => {
+        temperature.push({
+          x: row.timestamp * 1000,
+          y: parseFloat(celsiusToFahrenheit(row.temperature).toFixed(2)),
+        });
+        heatindex.push({
+          x: row.timestamp * 1000,
+          y: parseFloat(celsiusToFahrenheit(row.heatindex).toFixed(2)),
+        });
+        humidity.push({
+          x: row.timestamp * 1000,
+          y: parseFloat(row.humidity.toFixed(2)),
+        });
+      });
     }
-      // Add data to Temperature and Heat Index chart
-      tempHiLine.value.series[0].setData(temperature);
-      tempHiLine.value.series[1].setData(heatindex);
-      humLine.value.series[0].setData(humidity);
-    }
-  };
+    // Add data to Temperature and Heat Index chart
+    tempHiLine.value.series[0].setData(temperature);
+    tempHiLine.value.series[1].setData(heatindex);
+    humLine.value.series[0].setData(humidity);
+    
+      };
+    };
   
   const updateCards = async (rule) => {
     // Retrieve Min, Max, Avg, Spread/Range
-    if (!!start.value && !!end.value) {
+    if (!!start.value && !!end.value && rule) {
 
       // 1. Convert start and end dates collected fron TextFields to 10 digit timestamps
       let startDate = new Date(start.value).getTime() / 1000;
@@ -596,19 +620,12 @@
       const humid = await AppStore.getHumidityMMAR(startDate, endDate);
       const air = await AppStore.getPressureMMAR(startDate, endDate);
       const soil= await AppStore.getSoilMMAR(startDate, endDate);
-      
-      if(rule){
    
-      temperature.max = celsiusToFahrenheit(temp[0].max).toFixed(1);
-      temperature.min = celsiusToFahrenheit(temp[0].min).toFixed(1);
-      temperature.avg = celsiusToFahrenheit(temp[0].avg).toFixed(1);
-      temperature.range = (temperature.max - temperature.min).toFixed(1);
 
-      }else{
       temperature.max = temp[0].max.toFixed(1);
       temperature.min = temp[0].min.toFixed(1);
       temperature.avg = temp[0].avg.toFixed(1);
-      temperature.range = temp[0].range.toFixed(1);}
+      temperature.range = temp[0].range.toFixed(1);
 
       humidity.max = humid[0].max.toFixed(1);
       humidity.min = humid[0].min.toFixed(1);
@@ -624,7 +641,35 @@
       soilmoisture.max = soil[0].max.toFixed(1);
       soilmoisture.avg = soil[0].avg.toFixed(1);
       soilmoisture.range = soil[0].range.toFixed(1);
-  }
+    };
+    if(selected.value.includes("Fahrenheit")){
+      temperature.max = celsiusToFahrenheit(temperature.max).toFixed(1);
+      temperature.min = celsiusToFahrenheit(temperature.min).toFixed(1);
+      temperature.avg = celsiusToFahrenheit(temperature.avg).toFixed(1);
+      temperature.range = (temperature.max - temperature.min).toFixed(1);
+
+    }
+    if(selected.value.includes("Celsius")){
+      temperature.max = fahrenheitToCelsius(temperature.max).toFixed(1);
+      temperature.min = fahrenheitToCelsius(temperature.min).toFixed(1);
+      temperature.avg = fahrenheitToCelsius(temperature.avg).toFixed(1);
+      temperature.range = (temperature.max - temperature.min).toFixed(1);
+    }
+
+    if(selected.value.includes("Millimetre of Mercury")){
+      pressure.min = hPascalToMmHg(pressure.min).toFixed(1);
+      pressure.max = hPascalToMmHg(pressure.max).toFixed(1);
+      pressure.avg = hPascalToMmHg(pressure.avg).toFixed(1);
+      pressure.range = (pressure.max - pressure.min).toFixed(1);
+    }
+
+    if(selected.value.includes("Hectopascal")){
+      pressure.min = mmHgToHPascal(pressure.min).toFixed(1);
+      pressure.max = mmHgToHPascal(pressure.max).toFixed(1);
+      pressure.avg = mmHgToHPascal(pressure.avg).toFixed(1);
+      pressure.range = (pressure.max - pressure.min).toFixed(1);
+    }
+
     
 
   };
@@ -659,11 +704,12 @@
     }
   };
   
-  const updateScatter = async (rule) => {
+  
+  const updateScatter = async () => {
     if (!!start.value && !!end.value) {
-      // Convert output from Textfield components to 10 digit timestamps
       let startDate = new Date(start.value).getTime() / 1000;
       let endDate = new Date(end.value).getTime() / 1000;
+      // Convert output from Textfield components to 10 digit timestamps
       // Fetch data from backend
       const data = await AppStore.getAllInRange(startDate, endDate);
       // Create arrays for each plot
@@ -671,7 +717,7 @@
       let scatterPoints2 = [];
       let scatterPoints3 = [];
       // Iterate through data variable and transform object to format recognized by highcharts
-      if (rule){
+      if (selected.value.includes("Fahrenheit")){
       data.forEach((row) => {
         scatterPoints1.push({
           x: parseFloat(celsiusToFahrenheit(row.temperature).toFixed(2)),
@@ -685,28 +731,30 @@
           y: parseFloat(celsiusToFahrenheit(row.heatindex).toFixed(2)),
         });
       });}
-      else{
+      else if(selected.value.includes("Celsius") || selected.value==[]){
         data.forEach((row) => {
         scatterPoints1.push({
           x: parseFloat(row.temperature.toFixed(2)),
           y: parseFloat(row.heatindex.toFixed(2)),
         });
-      });
-      
-      data.forEach((row) => {
-        scatterPoints2.push({
-          x: parseFloat(row.humidity.toFixed(2)),
-          y: parseFloat(row.heatindex.toFixed(2)),
-        });
-      });
-      }
+      });}
 
-      data.forEach((row) => {
+      if (selected.value.includes("Hectopascal") || selected.value==[]){
+        data.forEach((row) => {
         scatterPoints3.push({
           x: parseFloat(row.pressure.toFixed(2)),
           y: parseFloat(row.altitude.toFixed(2)),
         });
       });
+      }
+      if (selected.value.includes("Millimetre of Mercury")){
+        data.forEach((row) => {
+        scatterPoints3.push({
+          x: parseFloat(hPascalToMmHg(row.pressure).toFixed(2)),
+          y: parseFloat(row.altitude.toFixed(2)),
+        });
+      });  
+    }
       // Add data to Temperature and Heat Index chart
       tempHiScat.value.series[0].setData(scatterPoints1);
       humScat.value.series[0].setData(scatterPoints2);
@@ -715,20 +763,68 @@
   };
 
   const celsiusToFahrenheit = (celsius) => {
-        return (celsius * 9) / 5 + 32;
+        return (celsius * (9 / 5)) + 32;
+      };
+
+  const fahrenheitToCelsius = (fahrenheit) => {
+        return (fahrenheit - 32) * (5 / 9);
+      };
+
+  const hPascalToMmHg = (hPascal) => {
+        return hPascal * 0.750061561303;
+      };
+
+  const mmHgToHPascal = (mmHg) => {
+        return mmHg / 0.750061561303;
       };
 
   const convertData = async () => {
-    updateLineCharts(true);
-    updateCards(true);
-    updateHistogramCharts();
-    updateScatter(true);
+  if(selected.value.includes("Fahrenheit")){
+    isCelsius.value = false;
     histo.value.xAxis[0].update({title: { text: "Value %/°F" , style:{color:'#000000'}}});
     tempHiLine.value.yAxis[0].update({title: { text: '°F' , style:{color:'#000000'}}});
     tempHiLine.value.yAxis[0].update({labels: { format:'{value} °F' }});
     tempHiScat.value.yAxis[0].update({title: { text: '°F' , style:{color:'#000000'}}});
     tempHiScat.value.yAxis[0].update({labels: { format:'{value} °F' }});
+    tempHiScat.value.xAxis[0].update({labels: { format: '{value} °F' }});
     humScat.value.yAxis[0].update({labels: { format: '{value} °F' }});
+  };
+
+  if(selected.value.includes("Celsius")){
+    isCelsius.value = true;
+    histo.value.xAxis[0].update({title: { text: "Value %/°C" , style:{color:'#000000'}}});
+    tempHiLine.value.yAxis[0].update({title: { text: '°C' , style:{color:'#000000'}}});
+    tempHiLine.value.yAxis[0].update({labels: { format:'{value} °C' }});
+    tempHiScat.value.yAxis[0].update({title: { text: '°C' , style:{color:'#000000'}}});
+    tempHiScat.value.yAxis[0].update({labels: { format:'{value} °C' }});
+    tempHiScat.value.xAxis[0].update({labels: { format: '{value} °C' }});
+    humScat.value.yAxis[0].update({labels: { format: '{value} °C' }});
+  }
+
+  if(selected.value.includes("Millimetre of Mercury")){
+    isPressure.value = false;
+    ampPresScat.value.xAxis[0].update({title: { text: 'Pressure (mmHg)' , style:{color:'#000000'}}});
+    ampPresScat.value.xAxis[0].update({labels: { format:'{value} mmHg' }});
+  };
+
+  if(selected.value.includes("Hectopascal")){
+    isPressure.value = true;
+    ampPresScat.value.xAxis[0].update({title: { text: 'Pressure (hPa)' , style:{color:'#000000'}}});
+    ampPresScat.value.xAxis[0].update({labels: { format:'{value} hPa' }});
+  };
+  
+    updateLineCharts();
+    updateCards(false);
+    updateHistogramCharts();
+    updateScatter();
+
+    setTimeout(() => {
+      selected.value = [];
+    }, 10000);
+
+    
+
+  
   };
   </script>
   
@@ -757,9 +853,7 @@
   }
   
   .sheet {
-    display: flex;;
-    align-items: center;
-    justify-content: center;
+    display: flex;
     height: 100px;
     width: 100%;
   }

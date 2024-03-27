@@ -179,7 +179,7 @@ def upload():
         file.save(join(getcwd(),Config.UPLOADS_FOLDER , filename))
         return jsonify({"status":"File upload successful", "filename":f"{filename}" })
 
-@app.route('/api/climo/get/<start>/<end>', methods=['GET'])
+@app.route('/api/weather/get/<start>/<end>', methods=['GET'])
 def getAllInRange(self,start, end):
         '''RETURNS A LIST OF OBJECTS. THAT FALLS WITHIN THE START AND END DATE RANGE'''
         try:
@@ -199,7 +199,7 @@ def getAllInRange(self,start, end):
             sort = [
                     ('timestamp', 1)
                 ]
-            result      = list(remotedb.ELET2415.climo.find(query, projection=projection).sort(sort))
+            result      = list(remotedb.ELET2415.weather.find(query, projection=projection).sort(sort))
         except Exception as e:
             msg = str(e)
             print("getAllInRange error ",msg)            

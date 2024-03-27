@@ -42,8 +42,8 @@ class MQTT:
          
 
         # 4. UPDATE MQTT SERVER AND PORT INFORMATION BELOW
-        self.client.connect_async("dbs.msjrealtms.com", 1883, 60)
-        # self.client.connect_async("www.yanacreations.com", 1883, 60)
+        # self.client.connect_async("dbs.msjrealtms.com", 1883, 60)
+        self.client.connect_async("www.yanacreations.com", 1883, 60)
        
 
     def connack_string(self,rc):

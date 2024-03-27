@@ -17,8 +17,32 @@
                             </v-row>
                             <p class="ma-5">{{ forecastNotes }}</p><br>
                         </v-card>
-                        <v-btn class="mt-5" align="center"  @click="convertTo();" color="surface-variant"  variant="outlined" > Convert to {{ units }}
+                        <br>
+                        <v-sheet align="center" >
+                            <v-row class="w-50">
+                       
+                            <v-autocomplete
+                            
+                            clearable
+                            chips
+                            label="Convert Units to"
+                            :items="[isCelsius ? 'Fahrenheit' : 'Celsius', isPressure ? 'Millimetre of Mercury' : 'Hectopascal', isAltitude ? 'Feet' : 'Metres']"
+                            multiple
+                            v-model="selected"
+                            
+                            variant="solo-filled"
+                            ></v-autocomplete>
+                            <v-btn
+                                class="ma-4"
+                                @click="convertTo(); hasSaved = true"
+                                
+                                >
+                                Done
                             </v-btn>
+                       
+                        </v-row>
+                    </v-sheet>
+                
                     </v-col>
             <v-col  cols="4">
                     <v-sheet class="ml-10"  :width="210" subtitle="Weather Conditions">
@@ -45,6 +69,13 @@
                                 <p class="text-h7">Air Pressure</p>
                                 <span class="text-h6"> {{ airpressure }} </span>
                             </v-list-item><br>
+                            <v-list-item
+                                density="compact"
+                                prepend-icon="mdi-transfer-up"
+                                >
+                                <p class="text-h7">Altitude</p>
+                                <span class="text-h6"> {{ altitude }} </span>
+                            </v-list-item><br>
                         </v-card-item>
                     </v-sheet>
                     
@@ -64,6 +95,14 @@
             <v-col cols="12">
                 <figure class="highcharts-figure">
                     <div id="container1"></div>
+                </figure>
+                
+            </v-col>
+        </v-row>
+        <v-row  justify="start">
+            <v-col cols="12">
+                <figure class="highcharts-figure">
+                    <div id="container94"></div>
                 </figure>
                 
             </v-col>
@@ -115,7 +154,23 @@ const port = ref(9002); // Port number
 const points = ref(10); // Specify the quantity of points to be shown on the live graph simultaneously.
 const shift = ref(false); // Delete a point from the left side and append a new point to the right side of the graph.
 const isUmbrella = ref("02"); // Weather icon
+const tempunits = ref("Fahrenheit"); // Temperature units
+const airunits = ref("Hectopascal"); // Pressure units
+const altunits = ref("Feet"); // Altitude units
+const tempChart = ref(null); // Chart object
+const HiChart = ref(null); // Chart object
+const altChart = ref(null); // Chart object
+const soilChart = ref(null); // Chart object
+const heightChart = ref(null); // Chart object  
+let isCelsius = true; // Temperature units
+let isPressure = true; // Pressure units
+let isAltitude = true; // Altitude units
+const hasSaved = false // Save status
+let moist = ref(10); // soil moisture
 const forecastNotes = ref("Weather is normal"); // Weather forecast notes
+const selected = ref([]); // Selected units
+
+
 const temperature = computed(()=>{
     if(!!payload.value){
         if(isCelsius){
@@ -141,16 +196,22 @@ const humidity = computed(()=>{
 });
 const airpressure = computed(()=>{
     if(!!payload.value){
+    if(isPressure){
     return `${payload.value.pressure.toFixed(2)} hPa`;
+    }else{
+        return `${convertToMercury(payload.value.pressure).toFixed(2)} mmHg`;
+}}});
+
+const altitude = computed(()=>{
+    if(!!payload.value){
+    if(isAltitude){
+    return `${payload.value.altitude.toFixed(2)} m`;
+    }else{
+        return `${convertToFeet(payload.value.altitude).toFixed(2)} ft`;}
     }
+
+
 });
-const units = ref("Fahrenheit"); // Temperature units
-const tempChart = ref(null); // Chart object
-const HiChart = ref(null); // Chart object
-const altChart = ref(null); // Chart object
-const soilChart = ref(null); // Chart object
-let isCelsius = true; // Temperature units
-let moist = ref(10); // soil moisture
 
 
 const CreateCharts = async () => {
@@ -206,6 +267,28 @@ const CreateCharts = async () => {
     } ],
     });
 
+    heightChart.value = Highcharts.chart('container94', {
+    chart: { zoomType: 'x' },
+    title: { text: 'Altitude Analysis (Live)', align: 'left' },
+    yAxis: {
+    title: { text: 'm' , style:{color:'#000000'}},
+    labels: { format: '{value} m' }
+    },
+    xAxis: {
+    type: 'datetime',
+    title: { text: '', style:{color:'#000000'} },
+    },
+    tooltip: { shared:true, },
+    series: [
+    {
+    name: 'Altitude',
+    type: 'spline',
+    data: [],
+    turboThreshold: 0,
+    color: Highcharts.getOptions().colors[8]
+    } ],
+    });
+
     altChart.value = Highcharts.chart('container5', {
     
         chart: {
@@ -218,7 +301,7 @@ const CreateCharts = async () => {
         },
 
         title: {
-            text: 'Barometer Pressure with Altitude (Live)',
+            text: 'Barometer Pressure (Live)',
         },
 
         pane: {
@@ -227,8 +310,8 @@ const CreateCharts = async () => {
         },
 
         yAxis: [{
-            min: 986,
-            max: 1014,
+            min: 950,
+            max: 1050,
             lineColor: '#339',
             tickColor: '#339',
             minorTickColor: '#339',
@@ -242,8 +325,8 @@ const CreateCharts = async () => {
             minorTickLength: 5,
             endOnTick: false
         }, {
-            min: 235,
-            max: 350,
+            min: 712,
+            max: 787,
             tickPosition: 'outside',
             lineColor: '#933',
             lineWidth: 2,
@@ -252,7 +335,6 @@ const CreateCharts = async () => {
             minorTickColor: '#933',
             tickLength: 5,
             minorTickLength: 5,
-            reversed: true,
             labels: {
                 distance: 12,
                 rotation: 'auto'
@@ -266,7 +348,7 @@ const CreateCharts = async () => {
             data: [1000],
             dataLabels: {
                 format: '<span style="color:#339">{y} hPa</span><br/>' +
-                    '<span style="color:#933">'+ moist.value + ' m</span>',
+                    '<span style="color:#933">{(multiply y 0.75):.0f} mmHg</span>',
                 backgroundColor: {
                     linearGradient: {
                         x1: 0,
@@ -348,11 +430,11 @@ watch(payload,(data)=> {
         else{ shift.value = true; }
 
         
-    soilChart.value.series[0].points[0].update(data.moisture);
+    soilChart.value.series[0].points[0].update(data.soilmoisture);
     altChart.value.series[0].points[0].update(data.pressure);
     moist.value = data.altitude;
 
-
+    
    if(isCelsius){
 
         tempChart.value.series[0].addPoint({y:parseFloat(data.temperature.toFixed(2)) ,x: (data.timestamp-18000) * 1000 },
@@ -361,6 +443,8 @@ watch(payload,(data)=> {
         true, shift.value);
         HiChart.value.series[0].addPoint({y:parseFloat(data.humidity.toFixed(2)) ,x: (data.timestamp-18000)* 1000 },
         true, shift.value);
+        heightChart.value.series[0].addPoint({y:parseFloat(data.altitude.toFixed(2)) ,x: (data.timestamp-18000)* 1000 },
+        true, shift.value);
     }else{
         tempChart.value.series[0].addPoint({y:convertToFahrenheit(parseFloat(data.temperature.toFixed(2))) ,x: (data.timestamp-18000) * 1000 },
         true, shift.value);
@@ -368,7 +452,18 @@ watch(payload,(data)=> {
         true, shift.value);
         HiChart.value.series[0].addPoint({y:parseFloat(data.humidity.toFixed(2)) ,x: (data.timestamp-18000)* 1000 },    
         true, shift.value);
+        heightChart.value.series[0].addPoint({y:parseFloat(data.altitude.toFixed(2)) ,x: (data.timestamp-18000)* 1000 },
+        true, shift.value);
 }
+if(isAltitude){
+    heightChart.value.series[0].addPoint({y:parseFloat(data.altitude.toFixed(2)) ,x: (data.timestamp-18000)* 1000 },
+    true, shift.value);
+}else{
+    heightChart.value.series[0].addPoint({y:convertToFeet(parseFloat(data.altitude).toFixed(2)) , x: (data.timestamp-18000)* 1000 },
+    true, shift.value);
+
+}
+
 if ( data.humidity>=65 && data.humidity<=70){
     console.log("Temperature and Humidity are within the normal range");
     forecastNotes.value = "Clouds a cover di sky today, bringing a cool breeze and a break from di sun's glare.";
@@ -381,27 +476,60 @@ if ( data.humidity>=65 && data.humidity<=70){
     console.log("Temperature and Humidity are below the normal range");
     forecastNotes.value = "Rain a go fall today, so mek sure yuh grab yuh umbrella and stay dry as yuh move about.";
     isUmbrella.value = "04";}
+
 });
 
 const convertToFahrenheit = (celsius) => {
     return (celsius * 9/5) + 32;
 };
 
+const convertToMercury = (pressure) => {
+    return pressure * 0.750061561303;
+};
+
+const convertToFeet = (altitude) => {
+    return altitude * 3.28084;
+};
 
 function convertTo() {
     // Code to read passcode here
-    isCelsius = !isCelsius;
-
-    if(isCelsius){
-        units.value = "Fahrenheit";
-        tempChart.value.yAxis[0].update({title: { text: '°C' , style:{color:'#000000'}}});
-        tempChart.value.yAxis[0].update({labels: { format:'{value} °C' }});
-    }else{
-        units.value = "Celsius";
+    if(selected.value.includes("Fahrenheit")){
+        isCelsius = false;
+        tempunits.value = "Fahrenheit";
         tempChart.value.yAxis[0].update({title: { text: '°F' , style:{color:'#000000'}}});
         tempChart.value.yAxis[0].update({labels: { format:'{value} °F' }});
+        
+    }else if(selected.value.includes("Celsius")){
+        isCelsius = true;
+        tempunits.value = "Celsius";
+        tempChart.value.yAxis[0].update({title: { text: '°C' , style:{color:'#000000'}}});
+        tempChart.value.yAxis[0].update({labels: { format:'{value} °C' }});
     }
+
+    if(selected.value.includes("Millimetre of Mercury")){
+        isPressure = false;
+        airunits.value = "Millimetre of Mercury";
+    }else if(selected.value.includes("Hectopascal")){
+        isPressure = true;
+        airunits.value = "Hectopascal";
+    }
+
+    if(selected.value.includes("Feet")){
+        isAltitude = false;
+        altunits.value = "Feet";
+        heightChart.value.yAxis[0].update({title: { text: 'ft' , style:{color:'#000000'}}});
+        heightChart.value.yAxis[0].update({labels: { format:'{value} ft' }});
+    }else if(selected.value.includes("Metres")){
+        isAltitude = true;
+        altunits.value = "Metres";
+        heightChart.value.yAxis[0].update({title: { text: 'm' , style:{color:'#000000'}}});
+        heightChart.value.yAxis[0].update({labels: { format:'{value} m' }});
+    }
+    
+    selected.value = [];
 }
+
+
 
 </script>
 
@@ -444,7 +572,13 @@ button
     
 }
 
+.ma-3 {
+    display: block;
+    padding-left: 150px;
+    padding-right: 150px;
+    
 
+}
 
 </style>
   
