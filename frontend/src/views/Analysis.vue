@@ -720,8 +720,10 @@
       let scatterPoints1 = [];
       let scatterPoints2 = [];
       let scatterPoints3 = [];
+     
       // Iterate through data variable and transform object to format recognized by highcharts
     if(selected.value.includes("Celsius") || selected.value.includes("Hectopascal") ||  selected.value.length==0){
+      
      data.forEach((row) => {
         scatterPoints1.push({
           x: parseFloat(row.temperature.toFixed(2)),
@@ -736,7 +738,10 @@
           y: parseFloat(row.altitude.toFixed(2)),
         });
       });}
-      if(selected.value.includes("Fahrenheit") ||  selected.value.length>=0){
+      if(selected.value.includes("Fahrenheit")){
+        scatterPoints1 = [];
+        scatterPoints2 = [];
+       
         data.forEach((row) => {
           scatterPoints1.push({
             x: parseFloat(celsiusToFahrenheit(row.temperature).toFixed(2)),
@@ -746,14 +751,13 @@
             x: parseFloat(row.humidity.toFixed(2)),
             y: parseFloat(celsiusToFahrenheit(row.heatindex).toFixed(2)),
           });
-          scatterPoints3.push({
-            x: parseFloat(row.pressure.toFixed(2)),
-            y: parseFloat(row.altitude.toFixed(2)),
-          });
+         
         });
       }
 
-      if (selected.value.includes("Millimetre of Mercury") ||  selected.value.length>=0){
+      if (selected.value.includes("Millimetre of Mercury")){
+     
+        scatterPoints3 = [];
         data.forEach((row) => {
         scatterPoints3.push({
           x: parseFloat(hPascalToMmHg(row.pressure).toFixed(2)),
